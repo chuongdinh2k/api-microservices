@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import { NotFoundException, AppException } from '@ecommerce/shared';
 import { OrderEntity } from './entities/order.entity';
+import { OrderItemEntity } from './entities/order-item.entity';
 import { OrdersRepository } from './orders.repository';
 import { CreateOrderDto } from './dto/create-order.dto';
 
@@ -16,8 +17,10 @@ export class OrdersService {
   ) {}
 
   async create(dto: CreateOrderDto) {
-    const userUrl = this.config.get<string>('USER_SERVICE_URL');
-    const productUrl = this.config.get<string>('PRODUCT_SERVICE_URL');
+    // const userUrl = this.config.get<string>('USER_SERVICE_URL');
+    const userUrl = 'http://localhost:3002';
+    // const productUrl = this.config.get<string>('PRODUCT_SERVICE_URL');
+    const productUrl = 'http://localhost:3003';
     if (userUrl) {
       try {
         await firstValueFrom(this.http.get(`${userUrl}/users/${dto.userId}`));
@@ -66,7 +69,7 @@ export class OrdersService {
       status: order.status,
       totalAmount: parseFloat(order.totalAmount),
       createdAt: order.createdAt,
-      items: (order.items || []).map((i) => ({
+      items: (order.items || []).map((i: OrderItemEntity) => ({
         productId: i.productId,
         quantity: i.quantity,
         unitPrice: parseFloat(i.unitPrice),

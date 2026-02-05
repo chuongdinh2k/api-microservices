@@ -10,5 +10,6 @@ async function bootstrap() {
   const port = Number(process.env.PORT ?? 3001);
   await app.listen(port);
   console.log(`Auth service listening on port ${port}`);
+  console.log(`Auth database URL: ${process.env.DATABASE_URL}`);
 }
 bootstrap();

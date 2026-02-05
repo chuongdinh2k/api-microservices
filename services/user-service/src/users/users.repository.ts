@@ -29,7 +29,9 @@ export class UsersRepository {
     if (!updated) throw new Error('User not found after update');
     return updated;
   }
-
+  async findAll(): Promise<UserEntity[]> {
+    return this.repo.find({ order: { createdAt: 'DESC' } });
+  }
   async delete(id: string): Promise<void> {
     await this.repo.delete(id);
   }

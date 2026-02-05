@@ -10,6 +10,11 @@ import { UpdateUserDto } from './dto/update-user.dto';
 export class UsersService {
   constructor(private readonly repo: UsersRepository) {}
 
+  async findAll() {
+    const users = await this.repo.findAll();
+    return users.map((user) => this.toResponse(user));
+  }
+
   async create(dto: CreateUserDto) {
     const existing = await this.repo.findByEmail(dto.email);
     if (existing) throw new ConflictException('Email already registered');

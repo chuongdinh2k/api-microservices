@@ -1,13 +1,16 @@
 import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { PinoLoggerService } from '@ecommerce/shared';
 
 @Controller('orders')
 export class OrdersController {
-  constructor(private readonly orders: OrdersService) {}
+  private readonly logger = new PinoLoggerService('OrdersController');
+  constructor(private readonly orders: OrdersService) { }
 
   @Post()
   create(@Body() dto: CreateOrderDto) {
+    this.logger.log('create order', dto);
     return this.orders.create(dto);
   }
 

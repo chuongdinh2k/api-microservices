@@ -12,10 +12,10 @@ import { RegisterDto } from './dto/register.dto';
 export class AuthService {
   constructor(
     private readonly jwt: JwtService,
-    private readonly config: ConfigService,
+    // private readonly config: ConfigService,
     private readonly authRepo: AuthRepository,
   ) {}
-
+  private readonly userServiceUrl = 'http://localhost:3002';
   async login(dto: LoginDto): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
     // In a full setup, validate credentials via user-service or local user table
     const userId = await this.validateUser(dto.email, dto.password);
@@ -60,7 +60,8 @@ export class AuthService {
 
   /** Placeholder: call user-service to validate credentials. Returns userId or null. */
   private async validateUser(email: string, _password: string): Promise<string | null> {
-    const base = this.config.get<string>('USER_SERVICE_URL');
+    // const base = this.config.get<string>('USER_SERVICE_URL');
+    const base = this.userServiceUrl;
     // if (!base) return 'demo-user-id'; // dev fallback
     try {
       const res = await fetch(`${base}/users/by-email/${encodeURIComponent(email)}`);
@@ -74,7 +75,8 @@ export class AuthService {
 
   /** Placeholder: call user-service to create user. Returns userId. */
   private async createUser(dto: RegisterDto): Promise<string> {
-    const base = this.config.get<string>('USER_SERVICE_URL');
+    // const base = this.config.get<string>('USER_SERVICE_URL');
+    const base = this.userServiceUrl;
     // if (!base) return 'demo-user-id';
     const res = await fetch(`${base}/users`, {
       method: 'POST',

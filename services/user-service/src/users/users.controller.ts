@@ -12,6 +12,11 @@ export class UsersController {
     return this.users.create(dto);
   }
 
+  @Get()
+  findAll() {
+    return this.users.findAll();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.users.findById(id);
