@@ -1,0 +1,162 @@
+version: "3.9"
+
+services:
+  # API Gateway - single entry point
+  gateway:
+    build:
+      context: .
+      dockerfile: services/gateway/Dockerfile
+    ports:
+      - "${GATEWAY_PORT:-3000}:3000"
+    environment:
+      - GATEWAY_PORT=3000
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - USER_SERVICE_URL=http://user-service:3002
+      - PRODUCT_SERVICE_URL=http://product-service:3003
+      - ORDER_SERVICE_URL=http://order-service:3004
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
+      order-service:
+        condition: service_healthy
+
+  # Auth Service + its own DB
+  auth-service:
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
+    environment:
+      - PORT=3001
+      - DATABASE_URL=postgresql://auth:auth_secret@auth-db:5432/auth_db
+      - JWT_SECRET=${JWT_SECRET:-dev-jwt-secret}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  auth-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: auth
+      POSTGRES_PASSWORD: auth_secret
+      POSTGRES_DB: auth_db
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auth -d auth_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  # User Service + its own DB
+  user-service:
+    build:
+      context: .
+      dockerfile: services/user-service/Dockerfile
+    environment:
+      - PORT=3002
+      - DATABASE_URL=postgresql://user:user_secret@user-db:5432/user_db
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    depends_on:
+      user-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3002/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  user-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: user_secret
+      POSTGRES_DB: user_db
+    volumes:
+      - user-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d user_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  # Product Service + its own DB
+  product-service:
+    build:
+      context: .
+      dockerfile: services/product-service/Dockerfile
+    environment:
+      - PORT=3003
+      - DATABASE_URL=postgresql://product:product_secret@product-db:5432/product_db
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    depends_on:
+      product-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3003/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  product-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: product
+      POSTGRES_PASSWORD: product_secret
+      POSTGRES_DB: product_db
+    volumes:
+      - product-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U product -d product_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  # Order Service + its own DB
+  order-service:
+    build:
+      context: .
+      dockerfile: services/order-service/Dockerfile
+    environment:
+      - PORT=3004
+      - DATABASE_URL=postgresql://order:order_secret@order-db:5432/order_db
+      - USER_SERVICE_URL=http://user-service:3002
+      - PRODUCT_SERVICE_URL=http://product-service:3003
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    depends_on:
+      order-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3004/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  order-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: order
+      POSTGRES_PASSWORD: order_secret
+      POSTGRES_DB: order_db
+    volumes:
+      - order-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U order -d order_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  auth-db-data:
+  user-db-data:
+  product-db-data:
+  order-db-data:

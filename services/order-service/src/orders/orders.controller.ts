@@ -1,0 +1,23 @@
+import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { OrdersService } from './orders.service';
+import { CreateOrderDto } from './dto/create-order.dto';
+
+@Controller('orders')
+export class OrdersController {
+  constructor(private readonly orders: OrdersService) {}
+
+  @Post()
+  create(@Body() dto: CreateOrderDto) {
+    return this.orders.create(dto);
+  }
+
+  @Get('user/:userId')
+  findByUser(@Param('userId') userId: string) {
+    return this.orders.findByUserId(userId);
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.orders.findById(id);
+  }
+}
