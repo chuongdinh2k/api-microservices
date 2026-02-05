@@ -61,7 +61,7 @@ export class AuthService {
   /** Placeholder: call user-service to validate credentials. Returns userId or null. */
   private async validateUser(email: string, _password: string): Promise<string | null> {
     const base = this.config.get<string>('USER_SERVICE_URL');
-    if (!base) return 'demo-user-id'; // dev fallback
+    // if (!base) return 'demo-user-id'; // dev fallback
     try {
       const res = await fetch(`${base}/users/by-email/${encodeURIComponent(email)}`);
       if (!res.ok) return null;
@@ -75,7 +75,7 @@ export class AuthService {
   /** Placeholder: call user-service to create user. Returns userId. */
   private async createUser(dto: RegisterDto): Promise<string> {
     const base = this.config.get<string>('USER_SERVICE_URL');
-    if (!base) return 'demo-user-id';
+    // if (!base) return 'demo-user-id';
     const res = await fetch(`${base}/users`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

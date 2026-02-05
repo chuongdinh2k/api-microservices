@@ -1,0 +1,89 @@
+# Infrastructure only: databases + Redis. Run with: make infra-up
+# Use this when running app services locally (e.g. npm run start:dev -w auth-service).
+# Ports match .env.example so DATABASE_URL=postgresql://...@localhost:5433/... etc. work.
+
+version: "3.9"
+
+services:
+  auth-db:
+    image: postgres:16-alpine
+    ports:
+      - "${AUTH_DB_PORT:-5433}:5432"
+    environment:
+      POSTGRES_USER: auth
+      POSTGRES_PASSWORD: auth_secret
+      POSTGRES_DB: auth_db
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auth -d auth_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  user-db:
+    image: postgres:16-alpine
+    ports:
+      - "${USER_DB_PORT:-5434}:5432"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: user_secret
+      POSTGRES_DB: user_db
+    volumes:
+      - user-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d user_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  product-db:
+    image: postgres:16-alpine
+    ports:
+      - "${PRODUCT_DB_PORT:-5435}:5432"
+    environment:
+      POSTGRES_USER: product
+      POSTGRES_PASSWORD: product_secret
+      POSTGRES_DB: product_db
+    volumes:
+      - product-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U product -d product_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  order-db:
+    image: postgres:16-alpine
+    ports:
+      - "${ORDER_DB_PORT:-5436}:5432"
+    environment:
+      POSTGRES_USER: order
+      POSTGRES_PASSWORD: order_secret
+      POSTGRES_DB: order_db
+    volumes:
+      - order-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U order -d order_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  auth-db-data:
+  user-db-data:
+  product-db-data:
+  order-db-data:
+  redis-data:

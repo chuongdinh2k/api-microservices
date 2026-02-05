@@ -51,6 +51,17 @@ Each service follows:
 - `src/app.module.ts` – ConfigModule, TypeOrmModule, feature modules
 - `src/<domain>/` – controller, service, repository, entities, dto
 
+## Makefile & infrastructure
+
+- **`make infra-up`** – Start only infrastructure (PostgreSQL ×4 + Redis). Use this when running app services locally (`npm run start:dev -w <service>`). DBs: `localhost:5433`, `5434`, `5435`, `5436`; Redis: `localhost:6379`.
+- **`make infra-down`** – Stop infra containers.
+- **`make up`** – Start full stack (gateway + all services + DBs) in Docker.
+- **`make down`** – Stop full stack.
+- **`make build`** – Build all service images.
+- **`make help`** – List all commands.
+
+When using `make infra-up`, set `DATABASE_URL` per service (e.g. for auth-service: `DATABASE_URL=postgresql://auth:auth_secret@localhost:5433/auth_db`) or use a `.env` with the URLs from `.env.example` (use the same host/ports: 5433=auth, 5434=user, 5435=product, 5436=order).
+
 ## Quick start
 
 ### Prerequisites
