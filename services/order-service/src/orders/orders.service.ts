@@ -7,6 +7,7 @@ import { OrderEntity } from './entities/order.entity';
 import { OrderItemEntity } from './entities/order-item.entity';
 import { OrdersRepository } from './orders.repository';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { OrderEventsPublisher } from '../events/order-events.publisher';
 
 @Injectable()
 export class OrdersService {
@@ -14,7 +15,13 @@ export class OrdersService {
     private readonly repo: OrdersRepository,
     private readonly http: HttpService,
     private readonly config: ConfigService,
+    private readonly orderEvents: OrderEventsPublisher,
   ) {}
+
+  async findAll() {
+    const orders = await this.repo.findAll();
+    return orders.map((o: OrderEntity) => this.toResponse(o));
+  }
 
   async create(dto: CreateOrderDto) {
     // const userUrl = this.config.get<string>('USER_SERVICE_URL');
@@ -48,7 +55,19 @@ export class OrdersService {
       { userId: dto.userId, status: 'pending', totalAmount },
       itemsWithPrice,
     );
-    return this.toResponse(order);
+    const response = this.toResponse(order);
+    await this.orderEvents.publishOrderCreated({
+      orderId: order.id,
+      userId: order.userId,
+      totalAmount: parseFloat(order.totalAmount),
+      items: (order.items || []).map((i) => ({
+        productId: i.productId,
+        quantity: i.quantity,
+        unitPrice: parseFloat(i.unitPrice),
+      })),
+      createdAt: order.createdAt.toISOString(),
+    });
+    return response;
   }
 
   async findById(id: string) {

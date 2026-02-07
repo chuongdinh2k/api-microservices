@@ -1,12 +1,12 @@
 # Ecommerce Microservices (NestJS)
 
-Monorepo of NestJS microservices: **gateway**, **auth-service**, **user-service**, **product-service**, **order-service**. Each service has its own database. REST-first, dockerized, with controller/service/repository structure, env config, and centralized error handling.
+Monorepo of NestJS microservices: **gateway**, **auth-service**, **user-service**, **product-service**, **order-service**, **payment-service**, **notification-service**. Each service has its own database. REST-first + async (RabbitMQ), dockerized, with controller/service/repository structure, env config, and centralized error handling.
 
 ## Rules (learning targets)
 
 | Rule | Implementation |
 |------|----------------|
-| **Each service = own DB** | auth-db, user-db, product-db, order-db in `docker-compose.yml` |
+| **Each service = own DB** | auth-db, user-db, product-db, order-db, payment-db, notification-db in `docker-compose.yml` |
 | **Dockerized** | Each service has a `Dockerfile`; run stack with `docker-compose up` |
 | **REST first** | All APIs are REST (JSON); no gRPC or GraphQL |
 | **Controller / Service / Repo** | NestJS modules: Controller → Service → Repository; entities in `entities/` |
@@ -25,6 +25,7 @@ Monorepo of NestJS microservices: **gateway**, **auth-service**, **user-service*
 - **DB:** PostgreSQL 16 (one per service)
 - **Validation:** class-validator + ValidationPipe
 - **Auth:** JWT (auth-service); refresh tokens stored in auth DB
+- **Async:** RabbitMQ (topic exchange `ecommerce.events`); order-service publishes `order.created`; payment-service and notification-service consume with **retry**, **ack**, **dead-letter queue**, **idempotency**
 
 ## Project structure
 
@@ -39,7 +40,9 @@ Monorepo of NestJS microservices: **gateway**, **auth-service**, **user-service*
 │   ├── auth-service/            # login, register, refresh
 │   ├── user-service/            # CRUD users (own DB)
 │   ├── product-service/        # CRUD products (own DB)
-│   └── order-service/           # Create orders, validate user/product via HTTP (own DB)
+│   └── order-service/           # Create orders, publish order.created (own DB)
+│   ├── payment-service/        # Consumes order.created, payment + idempotency (own DB)
+│   └── notification-service/   # Consumes order.created, send email (own DB)
 ├── docker-compose.yml
 ├── .env.example
 └── package.json                 # npm workspaces
@@ -121,7 +124,13 @@ When using `make infra-up`, set `DATABASE_URL` per service (e.g. for auth-servic
      -d '{"email":"u@example.com","password":"secret123","name":"User"}'
    ```
 
-3. Create a product, then create an order (order-service will validate user and product).
+3. Create a product, then create an order (order-service will validate user and product). Order-service publishes `order.created` to RabbitMQ; **payment-service** and **notification-service** consume it (payment records in DB, notification logs “email” mock).
+
+### Async flow (RabbitMQ)
+
+- **Create order** → order-service saves order and publishes `OrderCreatedPayload` to exchange `ecommerce.events`, routing key `order.created`.
+- **Payment-service** consumes from queue `payment.orders`: **idempotency** (by `eventId`), process payment, **ack**; on failure **retry** (republish with `x-retry-count`), after 3 retries **nack** → **dead-letter queue** `payment.dlq`.
+- **Notification-service** consumes from queue `notification.orders`: same **idempotency**, **retry**, **ack**, **DLQ**; sends order confirmation (mock email log).
 
 ## Scripts
 
@@ -130,7 +139,7 @@ When using `make infra-up`, set `DATABASE_URL` per service (e.g. for auth-servic
 - `npm run docker:down` – stop stack
 - `npm run docker:build` – build images
 
-Per service: `npm run start:dev -w <gateway|auth-service|user-service|product-service|order-service>`.
+Per service: `npm run start:dev -w <gateway|auth-service|user-service|product-service|order-service|payment-service|notification-service>`.
 
 ## Learning notes
 

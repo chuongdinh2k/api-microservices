@@ -14,6 +14,12 @@ export class OrdersController {
     return this.orders.create(dto);
   }
 
+  @Get()
+  findAll() {
+    this.logger.log('find all orders');
+    return this.orders.findAll();
+  }
+
   @Get('user/:userId')
   findByUser(@Param('userId') userId: string) {
     return this.orders.findByUserId(userId);

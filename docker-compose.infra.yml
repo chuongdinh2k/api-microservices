@@ -69,6 +69,38 @@ services:
       timeout: 3s
       retries: 5
 
+  payment-db:
+    image: postgres:16-alpine
+    ports:
+      - "${PAYMENT_DB_PORT:-5437}:5432"
+    environment:
+      POSTGRES_USER: payment
+      POSTGRES_PASSWORD: payment_secret
+      POSTGRES_DB: payment_db
+    volumes:
+      - payment-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U payment -d payment_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  notification-db:
+    image: postgres:16-alpine
+    ports:
+      - "${NOTIFICATION_DB_PORT:-5438}:5432"
+    environment:
+      POSTGRES_USER: notification
+      POSTGRES_PASSWORD: notification_secret
+      POSTGRES_DB: notification_db
+    volumes:
+      - notification-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U notification -d notification_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
   redis:
     image: redis:7-alpine
     ports:
@@ -81,9 +113,25 @@ services:
       timeout: 3s
       retries: 5
 
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 volumes:
   auth-db-data:
   user-db-data:
   product-db-data:
   order-db-data:
+  payment-db-data:
+  notification-db-data:
   redis-data:

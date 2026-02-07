@@ -131,9 +131,12 @@ services:
       - DATABASE_URL=postgresql://order:order_secret@order-db:5432/order_db
       - USER_SERVICE_URL=http://user-service:3002
       - PRODUCT_SERVICE_URL=http://product-service:3003
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
       - LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
       order-db:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3004/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
@@ -155,8 +158,91 @@ services:
       timeout: 3s
       retries: 5
 
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Payment Service + its own DB (consumes order.created, retry/ack/DLQ/idempotency)
+  payment-service:
+    build:
+      context: .
+      dockerfile: services/payment-service/Dockerfile
+    environment:
+      - PORT=3005
+      - DATABASE_URL=postgresql://payment:payment_secret@payment-db:5432/payment_db
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    depends_on:
+      payment-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3005/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  payment-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: payment
+      POSTGRES_PASSWORD: payment_secret
+      POSTGRES_DB: payment_db
+    volumes:
+      - payment-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U payment -d payment_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  # Notification Service (consumes order.created, sends email, retry/ack/DLQ/idempotency)
+  notification-service:
+    build:
+      context: .
+      dockerfile: services/notification-service/Dockerfile
+    environment:
+      - PORT=3006
+      - DATABASE_URL=postgresql://notification:notification_secret@notification-db:5432/notification_db
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    depends_on:
+      notification-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3006/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  notification-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: notification
+      POSTGRES_PASSWORD: notification_secret
+      POSTGRES_DB: notification_db
+    volumes:
+      - notification-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U notification -d notification_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
 volumes:
   auth-db-data:
   user-db-data:
   product-db-data:
   order-db-data:
+  payment-db-data:
+  notification-db-data:

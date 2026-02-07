@@ -10,7 +10,7 @@ import { UsersModule } from './users/users.module';
     TypeOrmModule.forRootAsync({
       useFactory: () => ({
         type: 'postgres',
-        url: process.env.DATABASE_URL,
+        url: process.env.USER_DB_URL,
         autoLoadEntities: true,
         synchronize: process.env.NODE_ENV !== 'production',
       }),

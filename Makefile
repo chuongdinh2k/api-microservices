@@ -9,7 +9,7 @@ COMPOSE_INFRA = docker compose -f docker-compose.infra.yml
 
 help:
 	@echo "Infrastructure (DBs + Redis only, for local dev):"
-	@echo "  make infra-up     Start auth-db, user-db, product-db, order-db, redis"
+	@echo "  make infra-up     Start DBs (auth, user, product, order, payment, notification), Redis, RabbitMQ"
 	@echo "  make infra-down   Stop and remove infra containers"
 	@echo "  make infra-logs   Follow infra logs"
 	@echo "  make infra-ps     List infra containers"
@@ -27,7 +27,7 @@ help:
 # --- Infrastructure only (databases + Redis) ---
 infra-up:
 	$(COMPOSE_INFRA) up -d
-	@echo "Infrastructure up. DBs: localhost:5433,5434,5435,5436  Redis: localhost:6379"
+	@echo "Infrastructure up. DBs: 5433-5438  Redis: 6379  RabbitMQ: 5672 (management: 15672)"
 
 infra-down:
 	$(COMPOSE_INFRA) down

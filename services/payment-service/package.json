@@ -1,5 +1,5 @@
 {
-  "name": "order-service",
+  "name": "payment-service",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -10,20 +10,16 @@
   },
   "dependencies": {
     "@ecommerce/shared": "*",
-    "amqplib": "^0.10.4",
     "@nestjs/common": "^10.4.15",
     "@nestjs/core": "^10.4.15",
     "@nestjs/platform-express": "^10.4.15",
     "@nestjs/config": "^3.3.0",
     "@nestjs/typeorm": "^10.0.2",
-    "@nestjs/axios": "^3.0.3",
-    "axios": "^1.7.9",
+    "amqplib": "^0.10.4",
     "pg": "^8.13.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.20",
-    "class-validator": "^0.14.1",
-    "class-transformer": "^0.5.1"
+    "typeorm": "^0.3.20"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.4.9",

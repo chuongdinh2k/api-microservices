@@ -27,6 +27,9 @@ export class OrdersRepository {
     }
     return this.orderRepo.findOneOrFail({ where: { id: saved.id }, relations: ['items'] });
   }
+  async findAll(): Promise<OrderEntity[]> {
+    return this.orderRepo.find({ order: { createdAt: 'DESC' } });
+  }
 
   async findById(id: string): Promise<OrderEntity | null> {
     return this.orderRepo.findOne({ where: { id }, relations: ['items'] });

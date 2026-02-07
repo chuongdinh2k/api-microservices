@@ -10,7 +10,8 @@ import { OrdersModule } from './orders/orders.module';
     TypeOrmModule.forRootAsync({
       useFactory: () => ({
         type: 'postgres',
-        url: process.env.DATABASE_URL,
+        // url: process.env.DATABASE_URL,
+        url: process.env.ORDER_DB_URL,
         autoLoadEntities: true,
         synchronize: process.env.NODE_ENV !== 'production',
       }),
