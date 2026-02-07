@@ -6,6 +6,7 @@ export const DLX_EXCHANGE = 'ecommerce.dlx';
 export const ROUTING_KEYS = {
   ORDER_CREATED: 'order.created',
   PAYMENT_COMPLETED: 'payment.completed',
+  PAYMENT_FAILED: 'payment.failed',
 } as const;
 
 export interface OrderCreatedPayload {
@@ -23,4 +24,10 @@ export interface PaymentCompletedPayload {
   paymentId: string;
   status: string;
   amount: number;
+}
+
+export interface PaymentFailedPayload {
+  eventId: string;
+  orderId: string;
+  reason: string;
 }

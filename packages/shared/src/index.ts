@@ -19,4 +19,5 @@ export {
   ROUTING_KEYS,
   type OrderCreatedPayload,
   type PaymentCompletedPayload,
+  type PaymentFailedPayload,
 } from './events/order.events';

@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 import { OrderItemEntity } from './order-item.entity';
 
-export type OrderStatus = 'pending' | 'confirmed' | 'shipped' | 'cancelled';
+export type OrderStatus = 'pending' | 'confirmed' | 'shipped' | 'cancelled' | 'payment_failed';
 
 @Entity('orders')
 export class OrderEntity {

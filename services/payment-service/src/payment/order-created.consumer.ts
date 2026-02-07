@@ -7,6 +7,7 @@ import {
   ROUTING_KEYS,
   type OrderCreatedPayload,
   type PaymentCompletedPayload,
+  type PaymentFailedPayload,
 } from '@ecommerce/shared';
 import { PaymentRepository } from './payment.repository';
 
@@ -74,22 +75,29 @@ export class OrderCreatedConsumer implements OnModuleInit, OnModuleDestroy {
     if (!msg || !this.channel) return;
     const retryCount = (msg.properties.headers?.[RETRY_HEADER] as number) ?? 0;
 
+    let payload: OrderCreatedPayload | undefined;
+    let eventId: string | undefined;
     try {
-      const payload = JSON.parse(msg.content.toString()) as OrderCreatedPayload;
-      const eventId = payload.eventId ?? msg.properties.messageId;
-      console.log('payload', payload);
+      payload = JSON.parse(msg.content.toString()) as OrderCreatedPayload;
+      eventId = payload.eventId ?? msg.properties.messageId;
+
+      this.logger.log(
+        `[RECV] orderId=${payload.orderId} eventId=${eventId} retryCount=${retryCount}/${MAX_RETRIES}`,
+      );
+
       if (!eventId) {
-        this.logger.warn('Message without eventId, nacking to DLQ');
+        this.logger.warn('[DLQ] Message without eventId, nacking to DLQ');
         this.channel.nack(msg, false, false);
         return;
       }
 
       if (await this.repo.isProcessed(eventId)) {
-        this.logger.log(`Idempotency: eventId=${eventId} already processed, ack`);
+        this.logger.log(`[IDEMPOTENCY] eventId=${eventId} already processed, ack`);
         this.channel.ack(msg);
         return;
       }
 
+      this.logger.log(`[PROCESS] Creating payment for orderId=${payload.orderId}`);
       const payment = await this.repo.createPayment(
         payload.orderId,
         eventId,
@@ -110,11 +118,21 @@ export class OrderCreatedConsumer implements OnModuleInit, OnModuleDestroy {
         Buffer.from(JSON.stringify(paymentCompleted)),
         { persistent: true, contentType: 'application/json', messageId: eventId },
       );
-      this.logger.log(`Payment completed orderId=${payload.orderId} eventId=${eventId}, published payment.completed`);
+      this.logger.log(
+        `[SUCCESS] Payment completed orderId=${payload.orderId} eventId=${eventId} paymentId=${payment.id}, published payment.completed`,
+      );
       this.channel.ack(msg);
     } catch (err) {
-      this.logger.warn(`Process error (retry ${retryCount}/${MAX_RETRIES}):`, err);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      const orderId = payload?.orderId ?? '?';
+      const evId = eventId ?? '?';
+      this.logger.warn(
+        `[FAIL] orderId=${orderId} eventId=${evId} retryCount=${retryCount}/${MAX_RETRIES} error=${errMsg}`,
+      );
       if (retryCount < MAX_RETRIES) {
+        this.logger.log(
+          `[RETRY] Republishing to queue with retryCount=${retryCount + 1} (next attempt ${retryCount + 2}/${MAX_RETRIES})`,
+        );
         this.channel.sendToQueue(QUEUE, msg.content, {
           persistent: true,
           contentType: msg.properties.contentType ?? 'application/json',
@@ -123,7 +141,28 @@ export class OrderCreatedConsumer implements OnModuleInit, OnModuleDestroy {
         });
         this.channel.ack(msg);
       } else {
-        this.logger.error(`Max retries reached, sending to DLQ`);
+        this.logger.error(
+          `[DLQ] Max retries reached (${MAX_RETRIES}), nacking to dead letter queue ${DLQ}`,
+        );
+        // Publish payment.failed event so order-service can update order status
+        try {
+          if (payload && evId !== '?') {
+            const failedPayload: PaymentFailedPayload = {
+              eventId: evId,
+              orderId: payload.orderId,
+              reason: 'max_retries_exceeded',
+            };
+            this.channel.publish(
+              EXCHANGE,
+              ROUTING_KEYS.PAYMENT_FAILED,
+              Buffer.from(JSON.stringify(failedPayload)),
+              { persistent: true, contentType: 'application/json', messageId: `failed-${evId}` },
+            );
+            this.logger.log(`[PUBLISH] Published payment.failed orderId=${payload.orderId} eventId=${evId}`);
+          }
+        } catch (publishErr) {
+          this.logger.warn('Could not publish payment.failed event', publishErr);
+        }
         this.channel.nack(msg, false, false);
       }
     }
