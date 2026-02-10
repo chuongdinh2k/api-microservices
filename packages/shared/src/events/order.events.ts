@@ -7,6 +7,8 @@ export const ROUTING_KEYS = {
   ORDER_CREATED: 'order.created',
   PAYMENT_COMPLETED: 'payment.completed',
   PAYMENT_FAILED: 'payment.failed',
+  INVENTORY_RESERVED: 'inventory.reserved',
+  INVENTORY_RESERVATION_FAILED: 'inventory.reservation_failed',
 } as const;
 
 export interface OrderCreatedPayload {
@@ -27,6 +29,18 @@ export interface PaymentCompletedPayload {
 }
 
 export interface PaymentFailedPayload {
+  eventId: string;
+  orderId: string;
+  reason: string;
+}
+
+export interface InventoryReservedPayload {
+  eventId: string;
+  orderId: string;
+  items: Array<{ productId: string; quantity: number }>;
+}
+
+export interface InventoryReservationFailedPayload {
   eventId: string;
   orderId: string;
   reason: string;

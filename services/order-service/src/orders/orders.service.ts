@@ -41,8 +41,17 @@ export class OrdersService {
       if (productUrl) {
         try {
           const res = await firstValueFrom(this.http.get(`${productUrl}/products/${it.productId}`));
-          unitPrice = String((res.data as { price?: number }).price ?? 0);
-        } catch {
+          const product = res.data as { price?: number; stock?: number };
+          unitPrice = String(product.price ?? 0);
+          const stock = Number(product.stock ?? 0);
+          if (stock < it.quantity) {
+            throw new AppException(
+              `Insufficient stock for product ${it.productId}: requested ${it.quantity}, available ${stock}`,
+              400,
+            );
+          }
+        } catch (err) {
+          if (err instanceof AppException) throw err;
           throw new AppException(`Product ${it.productId} not found`, 400);
         }
       }

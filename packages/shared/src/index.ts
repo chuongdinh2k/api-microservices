@@ -20,4 +20,6 @@ export {
   type OrderCreatedPayload,
   type PaymentCompletedPayload,
   type PaymentFailedPayload,
+  type InventoryReservedPayload,
+  type InventoryReservationFailedPayload,
 } from './events/order.events';

@@ -10,6 +10,7 @@ import { OrdersRepository } from './orders.repository';
 import { ProcessedEventsRepository } from './processed-events.repository';
 import { OrderEventsPublisher } from '../events/order-events.publisher';
 import { PaymentCompletedConsumer } from './payment-completed.consumer';
+import { InventoryReservationFailedConsumer } from './inventory-reservation-failed.consumer';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { PaymentCompletedConsumer } from './payment-completed.consumer';
     ProcessedEventsRepository,
     OrderEventsPublisher,
     PaymentCompletedConsumer,
+    InventoryReservationFailedConsumer,
   ],
   exports: [OrdersService],
 })
