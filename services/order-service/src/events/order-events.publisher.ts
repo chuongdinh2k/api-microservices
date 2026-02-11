@@ -8,6 +8,8 @@ import {
   type OrderCreatedPayload,
 } from '@ecommerce/shared';
 
+export const EVENT_TYPE_ORDER_CREATED = 'order.created';
+
 interface AmqpConnection {
   createChannel(): Promise<amqp.Channel>;
   close(): Promise<void>;
@@ -47,13 +49,20 @@ export class OrderEventsPublisher implements OnModuleInit, OnModuleDestroy {
   }
 
   async publishOrderCreated(payload: Omit<OrderCreatedPayload, 'eventId'>): Promise<void> {
-    if (!this.channel) return;
     const eventId = randomUUID();
-    const message: OrderCreatedPayload = { ...payload, eventId };
+    await this.publishOrderCreatedWithId({ ...payload, eventId });
+  }
+
+  /**
+   * Publishes order.created with a pre-assigned eventId (used by outbox worker).
+   */
+  async publishOrderCreatedWithId(payload: OrderCreatedPayload): Promise<boolean> {
+    if (!this.channel) return false;
+    const { eventId } = payload;
     const sent = this.channel.publish(
       EXCHANGE,
       ROUTING_KEYS.ORDER_CREATED,
-      Buffer.from(JSON.stringify(message)),
+      Buffer.from(JSON.stringify(payload)),
       {
         persistent: true,
         contentType: 'application/json',
@@ -62,8 +71,9 @@ export class OrderEventsPublisher implements OnModuleInit, OnModuleDestroy {
     );
     if (!sent) {
       this.logger.warn('Buffer full; order.created event may not be delivered');
-    } else {
-      this.logger.log(`Published order.created eventId=${eventId} orderId=${payload.orderId}`);
+      return false;
     }
+    this.logger.log(`Published order.created eventId=${eventId} orderId=${payload.orderId}`);
+    return true;
   }
 }

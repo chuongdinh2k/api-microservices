@@ -2,12 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
+import { randomUUID } from 'crypto';
 import { NotFoundException, AppException } from '@ecommerce/shared';
 import { OrderEntity } from './entities/order.entity';
 import { OrderItemEntity } from './entities/order-item.entity';
 import { OrdersRepository } from './orders.repository';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { OrderEventsPublisher } from '../events/order-events.publisher';
 
 @Injectable()
 export class OrdersService {
@@ -15,7 +15,6 @@ export class OrdersService {
     private readonly repo: OrdersRepository,
     private readonly http: HttpService,
     private readonly config: ConfigService,
-    private readonly orderEvents: OrderEventsPublisher,
   ) {}
 
   async findAll() {
@@ -60,23 +59,13 @@ export class OrdersService {
     const totalAmount = itemsWithPrice
       .reduce((sum, i) => sum + Number(i.unitPrice) * i.quantity, 0)
       .toFixed(2);
-    const order = await this.repo.create(
+    const eventId = randomUUID();
+    const order = await this.repo.createOrderAndOutbox(
       { userId: dto.userId, status: 'pending', totalAmount },
       itemsWithPrice,
+      eventId,
     );
-    const response = this.toResponse(order);
-    await this.orderEvents.publishOrderCreated({
-      orderId: order.id,
-      userId: order.userId,
-      totalAmount: parseFloat(order.totalAmount),
-      items: (order.items || []).map((i) => ({
-        productId: i.productId,
-        quantity: i.quantity,
-        unitPrice: parseFloat(i.unitPrice),
-      })),
-      createdAt: order.createdAt.toISOString(),
-    });
-    return response;
+    return this.toResponse(order);
   }
 
   async findById(id: string) {
