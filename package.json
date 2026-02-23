@@ -9,9 +9,10 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down",
-    "docker:build": "docker-compose build"
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:build": "docker compose build",
+    "docker:dev":"docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build"
   },
   "engines": {
     "node": ">=20"

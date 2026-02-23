@@ -108,6 +108,20 @@ When using `make infra-up`, set `DATABASE_URL` per service (e.g. for auth-servic
    - `GET /products/*`, `POST /products`, etc. – product-service
    - `GET /orders/*`, `POST /orders`, etc. – order-service
 
+### Development with Docker (live reload)
+
+To run the full stack with your local source mounted so code changes reload in the container:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+```
+
+- Repo root is mounted at `/app`; each app service runs `nest start --watch`.
+- Edit code locally; the service in the container will recompile and restart.
+- Dependencies are installed once in a shared volume (`app_node_modules`); rebuild with `--build` if you change `package.json` or add workspaces.
+
+Script: `npm run docker:dev` (see Scripts below).
+
 ### Example flow
 
 1. Create a user (via gateway or directly on user-service):
@@ -138,6 +152,7 @@ When using `make infra-up`, set `DATABASE_URL` per service (e.g. for auth-servic
 - `npm run docker:up` – start stack
 - `npm run docker:down` – stop stack
 - `npm run docker:build` – build images
+- `npm run docker:dev` – start stack with live reload (docker-compose + docker-compose.dev.yml)
 
 Per service: `npm run start:dev -w <gateway|auth-service|user-service|product-service|order-service|payment-service|notification-service>`.
 

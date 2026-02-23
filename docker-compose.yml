@@ -32,6 +32,7 @@ services:
     environment:
       - PORT=3001
       - DATABASE_URL=postgresql://auth:auth_secret@auth-db:5432/auth_db
+      - AUTH_DB_URL=postgresql://auth:auth_secret@auth-db:5432/auth_db
       - JWT_SECRET=${JWT_SECRET:-dev-jwt-secret}
       - LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
@@ -65,6 +66,7 @@ services:
     environment:
       - PORT=3002
       - DATABASE_URL=postgresql://user:user_secret@user-db:5432/user_db
+      - USER_DB_URL=postgresql://user:user_secret@user-db:5432/user_db
       - LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
       user-db:
@@ -97,6 +99,7 @@ services:
     environment:
       - PORT=3003
       - DATABASE_URL=postgresql://product:product_secret@product-db:5432/product_db
+      - PRODUCT_DB_URL=postgresql://product:product_secret@product-db:5432/product_db
       - LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
       product-db:
@@ -129,6 +132,7 @@ services:
     environment:
       - PORT=3004
       - DATABASE_URL=postgresql://order:order_secret@order-db:5432/order_db
+      - ORDER_DB_URL=postgresql://order:order_secret@order-db:5432/order_db
       - USER_SERVICE_URL=http://user-service:3002
       - PRODUCT_SERVICE_URL=http://product-service:3003
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
@@ -177,6 +181,7 @@ services:
     environment:
       - PORT=3005
       - DATABASE_URL=postgresql://payment:payment_secret@payment-db:5432/payment_db
+      - PAYMENT_DB_URL=postgresql://payment:payment_secret@payment-db:5432/payment_db
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
       - LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
@@ -212,6 +217,7 @@ services:
     environment:
       - PORT=3006
       - DATABASE_URL=postgresql://notification:notification_secret@notification-db:5432/notification_db
+      - NOTIFICATION_DB_URL=postgresql://notification:notification_secret@notification-db:5432/notification_db
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
       - LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:

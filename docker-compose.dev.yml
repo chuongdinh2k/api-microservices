@@ -1,0 +1,87 @@
+# Development override: mount source and run in watch mode so code changes reload in the container.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# - Binds the repo root to /app so container sees your local files.
+# - Uses a shared node_modules volume so dependencies are installed once (Linux) and reused.
+# - Each app service runs `nest start --watch` so edits trigger a reload.
+
+services:
+  gateway:
+    volumes:
+      - .:/app
+      - app_node_modules:/app/node_modules
+    command: sh -c "npm install && npm run start:dev --workspace=gateway"
+    healthcheck:
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
+  auth-service:
+    volumes:
+      - .:/app
+      - app_node_modules:/app/node_modules
+    command: sh -c "npm install && npm run start:dev --workspace=auth-service"
+    healthcheck:
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
+  user-service:
+    volumes:
+      - .:/app
+      - app_node_modules:/app/node_modules
+    command: sh -c "npm install && npm run start:dev --workspace=user-service"
+    healthcheck:
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
+  product-service:
+    volumes:
+      - .:/app
+      - app_node_modules:/app/node_modules
+    command: sh -c "npm install && npm run start:dev --workspace=product-service"
+    healthcheck:
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
+  order-service:
+    volumes:
+      - .:/app
+      - app_node_modules:/app/node_modules
+    command: sh -c "npm install && npm run start:dev --workspace=order-service"
+    healthcheck:
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
+  payment-service:
+    volumes:
+      - .:/app
+      - app_node_modules:/app/node_modules
+    command: sh -c "npm install && npm run start:dev --workspace=payment-service"
+    healthcheck:
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
+  notification-service:
+    volumes:
+      - .:/app
+      - app_node_modules:/app/node_modules
+    command: sh -c "npm install && npm run start:dev --workspace=notification-service"
+    healthcheck:
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
+volumes:
+  app_node_modules:

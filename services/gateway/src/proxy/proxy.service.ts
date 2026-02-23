@@ -13,14 +13,14 @@ export class ProxyService {
 
   private baseUrls(): Record<string, string> {
     return {
-      // auth: this.config.getOrThrow<string>('AUTH_SERVICE_URL') ?? 'http://localhost:3001',
-      // user: this.config.getOrThrow<string>('USER_SERVICE_URL') ?? 'http://localhost:3002',
-      // product: this.config.getOrThrow<string>('PRODUCT_SERVICE_URL') ?? 'http://localhost:3003',
-      // order: this.config.getOrThrow<string>('ORDER_SERVICE_URL') ?? 'http://localhost:3004',
-      auth: 'http://localhost:3001',
-      user: 'http://localhost:3002',
-      product: 'http://localhost:3003',
-      order: 'http://localhost:3004',
+      auth: this.config.getOrThrow<string>('AUTH_SERVICE_URL'),
+      user: this.config.getOrThrow<string>('USER_SERVICE_URL'),
+      product: this.config.getOrThrow<string>('PRODUCT_SERVICE_URL'),
+      order: this.config.getOrThrow<string>('ORDER_SERVICE_URL'),
+      // auth: 'http://localhost:3001',
+      // user: 'http://localhost:3002',
+      // product: 'http://localhost:3003',
+      // order: 'http://localhost:3004',
     };
   }
 
@@ -31,6 +31,9 @@ export class ProxyService {
     const method = (req.method || 'GET').toLowerCase();
     const headers = { ...req.headers } as Record<string, string>;
     delete headers.host;
+    // Let the HTTP client set these from the actual body we send (req.body is re-serialized)
+    delete headers['content-length'];
+    delete headers['transfer-encoding'];
 
     const res = await firstValueFrom(
       this.http.request({

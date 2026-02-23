@@ -24,9 +24,9 @@ export class OrdersService {
 
   async create(dto: CreateOrderDto) {
     // const userUrl = this.config.get<string>('USER_SERVICE_URL');
-    const userUrl = 'http://localhost:3002';
+    const userUrl = this.config.getOrThrow<string>('USER_SERVICE_URL');
     // const productUrl = this.config.get<string>('PRODUCT_SERVICE_URL');
-    const productUrl = 'http://localhost:3003';
+    const productUrl = this.config.getOrThrow<string>('PRODUCT_SERVICE_URL');
     if (userUrl) {
       try {
         await firstValueFrom(this.http.get(`${userUrl}/users/${dto.userId}`));
