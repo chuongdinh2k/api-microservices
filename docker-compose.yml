@@ -10,6 +10,7 @@ services:
       - "${GATEWAY_PORT:-3000}:3000"
     environment:
       - GATEWAY_PORT=3000
+      - JWT_SECRET=${JWT_SECRET:-dev-jwt-secret}
       - AUTH_SERVICE_URL=http://auth-service:3001
       - USER_SERVICE_URL=http://user-service:3002
       - PRODUCT_SERVICE_URL=http://product-service:3003

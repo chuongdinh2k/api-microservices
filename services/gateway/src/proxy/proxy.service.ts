@@ -31,9 +31,12 @@ export class ProxyService {
     const method = (req.method || 'GET').toLowerCase();
     const headers = { ...req.headers } as Record<string, string>;
     delete headers.host;
-    // Let the HTTP client set these from the actual body we send (req.body is re-serialized)
     delete headers['content-length'];
     delete headers['transfer-encoding'];
+    // Central auth: do not forward client token; pass only gateway-verified identity
+    delete headers.authorization;
+    if (req.requestId) headers['x-request-id'] = req.requestId;
+    if (req.user?.sub) headers['x-user-id'] = req.user.sub;
 
     const res = await firstValueFrom(
       this.http.request({

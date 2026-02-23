@@ -5,13 +5,27 @@ const logger = new Logger('Gateway');
 
 export function requestLogger(
   req: Request,
-  _res: Response,
+  res: Response,
   next: NextFunction,
 ): void {
+  const start = Date.now();
   const method = req.method;
   const path = req.originalUrl ?? req.url;
-  const ip = (req.get('x-forwarded-for') ?? req.socket?.remoteAddress ?? 'unknown').toString().split(',')[0].trim();
+  const ip = (req.get('x-forwarded-for') ?? req.socket?.remoteAddress ?? 'unknown')
+    .toString()
+    .split(',')[0]
+    .trim();
   const userAgent = req.get('user-agent') ?? '-';
-  logger.log(`${method} ${path} - ip=${ip} - ${userAgent}`);
+  const requestId = req.requestId ?? '-';
+
+  res.on('finish', () => {
+    const durationMs = Date.now() - start;
+    const statusCode = res.statusCode;
+    const userId = req.user?.sub ?? '-';
+    logger.log(
+      `${method} ${path} ${statusCode} ${durationMs}ms - requestId=${requestId} userId=${userId} ip=${ip} - ${userAgent}`,
+    );
+  });
+
   next();
 }
