@@ -1,0 +1,43 @@
+# Filebeat 8 – collect container stdout and send to Elasticsearch.
+# Uses Docker autodiscover so containers are found via the Docker API (works on Docker Desktop).
+# Decodes JSON log lines (e.g. Pino) so level, context, service become first-class fields.
+
+filebeat.autodiscover:
+  providers:
+    - type: docker
+      hints.enabled: false
+      templates:
+        # Collect from all containers. In Kibana, filter by service (e.g. gateway, payment-service) to see app logs only.
+        - condition:
+            has_fields: ["docker.container.id"]
+          config:
+            - type: container
+              paths:
+                - /var/lib/docker/containers/${data.docker.container.id}/*.log
+              stream: all
+              format: docker
+
+processors:
+  - add_docker_metadata:
+      host: "unix:///var/run/docker.sock"
+      match_source: true
+  - add_host_metadata: ~
+  # Promote container name to service for Kibana filters (compose service name)
+  - rename:
+      fields:
+        - { from: "container.name", to: "service" }
+      ignore_missing: true
+      fail_on_error: false
+  # Decode app JSON logs (Pino) so level, context, requestId are queryable
+  - decode_json_fields:
+      fields: ["message"]
+      target: ""
+      overwrite_keys: true
+      when.regexp.message: '^\{'
+
+output.elasticsearch:
+  hosts: ["${ELASTICSEARCH_HOSTS:http://elasticsearch:9200}"]
+  index: "logs-ecommerce-%{+yyyy.MM.dd}"
+
+setup.template.name: "logs-ecommerce"
+setup.template.pattern: "logs-ecommerce-*"

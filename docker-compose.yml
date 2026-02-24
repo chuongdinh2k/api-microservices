@@ -9,7 +9,10 @@ services:
     ports:
       - "${GATEWAY_PORT:-3000}:3000"
     environment:
+      - NODE_ENV=production
       - GATEWAY_PORT=3000
+      - SERVICE_NAME=gateway
+      - LOG_LEVEL=${LOG_LEVEL:-info}
       - JWT_SECRET=${JWT_SECRET:-dev-jwt-secret}
       - AUTH_SERVICE_URL=http://auth-service:3001
       - USER_SERVICE_URL=http://user-service:3002
@@ -31,11 +34,14 @@ services:
       context: .
       dockerfile: services/auth-service/Dockerfile
     environment:
+      - NODE_ENV=production
       - PORT=3001
+      - SERVICE_NAME=auth-service
+      - LOG_LEVEL=${LOG_LEVEL:-info}
       - DATABASE_URL=postgresql://auth:auth_secret@auth-db:5432/auth_db
       - AUTH_DB_URL=postgresql://auth:auth_secret@auth-db:5432/auth_db
       - JWT_SECRET=${JWT_SECRET:-dev-jwt-secret}
-      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - USER_SERVICE_URL=http://user-service:3002
     depends_on:
       auth-db:
         condition: service_healthy
@@ -65,10 +71,12 @@ services:
       context: .
       dockerfile: services/user-service/Dockerfile
     environment:
+      - NODE_ENV=production
       - PORT=3002
+      - SERVICE_NAME=user-service
+      - LOG_LEVEL=${LOG_LEVEL:-info}
       - DATABASE_URL=postgresql://user:user_secret@user-db:5432/user_db
       - USER_DB_URL=postgresql://user:user_secret@user-db:5432/user_db
-      - LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
       user-db:
         condition: service_healthy
@@ -98,10 +106,12 @@ services:
       context: .
       dockerfile: services/product-service/Dockerfile
     environment:
+      - NODE_ENV=production
       - PORT=3003
+      - SERVICE_NAME=product-service
+      - LOG_LEVEL=${LOG_LEVEL:-info}
       - DATABASE_URL=postgresql://product:product_secret@product-db:5432/product_db
       - PRODUCT_DB_URL=postgresql://product:product_secret@product-db:5432/product_db
-      - LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
       product-db:
         condition: service_healthy
@@ -131,13 +141,15 @@ services:
       context: .
       dockerfile: services/order-service/Dockerfile
     environment:
+      - NODE_ENV=production
       - PORT=3004
+      - SERVICE_NAME=order-service
+      - LOG_LEVEL=${LOG_LEVEL:-info}
       - DATABASE_URL=postgresql://order:order_secret@order-db:5432/order_db
       - ORDER_DB_URL=postgresql://order:order_secret@order-db:5432/order_db
       - USER_SERVICE_URL=http://user-service:3002
       - PRODUCT_SERVICE_URL=http://product-service:3003
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
-      - LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
       order-db:
         condition: service_healthy
@@ -168,6 +180,9 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "check_running"]
       interval: 5s
@@ -180,11 +195,13 @@ services:
       context: .
       dockerfile: services/payment-service/Dockerfile
     environment:
+      - NODE_ENV=production
       - PORT=3005
+      - SERVICE_NAME=payment-service
+      - LOG_LEVEL=${LOG_LEVEL:-info}
       - DATABASE_URL=postgresql://payment:payment_secret@payment-db:5432/payment_db
       - PAYMENT_DB_URL=postgresql://payment:payment_secret@payment-db:5432/payment_db
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
-      - LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
       payment-db:
         condition: service_healthy
@@ -216,11 +233,13 @@ services:
       context: .
       dockerfile: services/notification-service/Dockerfile
     environment:
+      - NODE_ENV=production
       - PORT=3006
+      - SERVICE_NAME=notification-service
+      - LOG_LEVEL=${LOG_LEVEL:-info}
       - DATABASE_URL=postgresql://notification:notification_secret@notification-db:5432/notification_db
       - NOTIFICATION_DB_URL=postgresql://notification:notification_secret@notification-db:5432/notification_db
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
-      - LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
       notification-db:
         condition: service_healthy

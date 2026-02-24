@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { PinoLoggerService } from '@ecommerce/shared';
 import { AppController } from './app.controller';
 import { PaymentModule } from './payment/payment.module';
 
@@ -19,5 +20,6 @@ import { PaymentModule } from './payment/payment.module';
     PaymentModule,
   ],
   controllers: [AppController],
+  providers: [PinoLoggerService],
 })
 export class AppModule {}

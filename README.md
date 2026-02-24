@@ -122,6 +122,36 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 
 Script: `npm run docker:dev` (see Scripts below).
 
+### Centralized logging (ELK)
+
+The stack can run with **Elasticsearch**, **Kibana**, and **Filebeat** so all service logs are collected and queryable in one place.
+
+1. **Start the app stack and the logging stack:**
+
+   ```bash
+   docker compose -f docker-compose.yml -f docker-compose.logging.yml up -d --build
+   ```
+
+   Or with dev override (live reload + logging):
+
+   ```bash
+   docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.logging.yml up --build
+   ```
+
+2. **Open Kibana:** [http://localhost:5601](http://localhost:5601)
+
+3. **Create an index pattern (first time only):**
+   - Go to **Stack Management** → **Index Patterns** (or **Data Views** in Kibana 8+) → **Create index pattern**.
+   - Index pattern: `logs-ecommerce-*` (or `filebeat-*` if you use the default Filebeat index).
+   - Time field: `@timestamp` → **Create**.
+
+4. **View logs:** Open **Discover**. Filter by:
+   - `service` (e.g. `gateway`, `auth-service`, `order-service`) to see one service.
+   - `requestId` to follow a request across logs.
+   - `level` (e.g. `error`, `info`) to see only errors or info.
+
+Logs flow: **App (stdout, JSON)** → **Docker** → **Filebeat** → **Elasticsearch** → **Kibana**. Each service sets `SERVICE_NAME` and `LOG_LEVEL` in `docker-compose.yml`; the shared `PinoLoggerService` adds a `service` field and outputs JSON in production for ELK.
+
 ### Example flow
 
 1. Create a user (via gateway or directly on user-service):

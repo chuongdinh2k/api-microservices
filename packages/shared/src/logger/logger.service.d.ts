@@ -10,5 +10,6 @@ export declare class PinoLoggerService implements NestLoggerService {
     warn(message: string, ...optionalParams: unknown[]): void;
     debug(message: string, ...optionalParams: unknown[]): void;
     verbose(message: string, ...optionalParams: unknown[]): void;
+    logWith(obj: Record<string, unknown>, message: string): void;
 }
 //# sourceMappingURL=logger.service.d.ts.map
