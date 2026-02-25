@@ -1,0 +1,30 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: ecommerce
+resources:
+  - ../../base
+# Production: set your registry and tag (e.g. from CI)
+images:
+  - name: ecommerce/gateway:latest
+    newName: ecommerce/gateway
+    newTag: latest
+  - name: ecommerce/auth-service:latest
+    newName: ecommerce/auth-service
+    newTag: latest
+  - name: ecommerce/user-service:latest
+    newName: ecommerce/user-service
+    newTag: latest
+  - name: ecommerce/product-service:latest
+    newName: ecommerce/product-service
+    newTag: latest
+  - name: ecommerce/order-service:latest
+    newName: ecommerce/order-service
+    newTag: latest
+  - name: ecommerce/payment-service:latest
+    newName: ecommerce/payment-service
+    newTag: latest
+  - name: ecommerce/notification-service:latest
+    newName: ecommerce/notification-service
+    newTag: latest
+# Prod: use imagePullSecrets if using a private registry
+# patch image tags in CI: kustomize edit set image ecommerce/gateway=myregistry.io/me/gateway:v1.0.0

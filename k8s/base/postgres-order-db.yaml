@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: order-db-data
+  namespace: ecommerce
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-db
+  namespace: ecommerce
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-db
+  template:
+    metadata:
+      labels:
+        app: order-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          env:
+            - name: POSTGRES_USER
+              value: order
+            - name: POSTGRES_PASSWORD
+              value: order_secret
+            - name: POSTGRES_DB
+              value: order_db
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "order", "-d", "order_db"]
+            initialDelaySeconds: 5
+            periodSeconds: 3
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: order-db-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-db
+  namespace: ecommerce
+spec:
+  selector:
+    app: order-db
+  ports:
+    - port: 5432
+      targetPort: 5432
+  type: ClusterIP

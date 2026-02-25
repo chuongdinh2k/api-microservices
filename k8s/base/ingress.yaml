@@ -1,0 +1,36 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gateway-ingress
+  namespace: ecommerce
+  annotations:
+    # For ingress-nginx; adjust if using another controller
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 3000
+  # Optional: uncomment and set host + tls for HTTPS
+  # rules:
+  #   - host: api.example.com
+  #     http:
+  #       paths:
+  #         - path: /
+  #           pathType: Prefix
+  #           backend:
+  #             service:
+  #               name: gateway
+  #               port:
+  #                 number: 3000
+  # tls:
+  #   - hosts:
+  #       - api.example.com
+  #     secretName: gateway-tls

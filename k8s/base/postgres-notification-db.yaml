@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: notification-db-data
+  namespace: ecommerce
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-db
+  namespace: ecommerce
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-db
+  template:
+    metadata:
+      labels:
+        app: notification-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          env:
+            - name: POSTGRES_USER
+              value: notification
+            - name: POSTGRES_PASSWORD
+              value: notification_secret
+            - name: POSTGRES_DB
+              value: notification_db
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "notification", "-d", "notification_db"]
+            initialDelaySeconds: 5
+            periodSeconds: 3
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: notification-db-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-db
+  namespace: ecommerce
+spec:
+  selector:
+    app: notification-db
+  ports:
+    - port: 5432
+      targetPort: 5432
+  type: ClusterIP
